@@ -50,13 +50,8 @@ export function useApi(): AxiosInstance {
 
   instance.interceptors.request.use((config) => {
     const token = auth.getToken()
-    console.log('🔑 API Request to:', config.url)
-    console.log('🔑 Token from cookie:', token ? `${token.substring(0, 20)}...` : 'NOT FOUND')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
-      console.log('✅ Authorization header set')
-    } else {
-      console.error('❌ No token available!')
     }
     return config
   })

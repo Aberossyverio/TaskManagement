@@ -70,7 +70,6 @@ const handleLogin = async () => {
   loading.value = true
   try {
     const result = await authApi.login(state)
-    console.log('Login completed, navigating to tasks...')
     
     // Ensure navigation happens after login is fully complete
     if (result && result.accessToken) {
@@ -78,7 +77,6 @@ const handleLogin = async () => {
     }
   } catch (error) {
     // Error already handled by handleResponseError in authApi
-    console.error('Login failed, staying on login page')
   } finally {
     loading.value = false
   }
