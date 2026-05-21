@@ -71,7 +71,25 @@ A fullstack task management application built with .NET 10, Nuxt 4, and PostgreS
 
 ### 1. Database Setup
 
-Start PostgreSQL using Docker:
+**Option A: Local PostgreSQL Installation**
+
+Install and start PostgreSQL 16+ on your machine, then create the database:
+
+```bash
+# Using psql command line
+psql -U postgres
+CREATE DATABASE testdb;
+\q
+```
+
+**Or use pgAdmin** to create a database named `testdb`
+
+Make sure PostgreSQL is running on port 5433 (or update `appsettings.json` to match your port).
+
+**Option B: PostgreSQL with Docker (Database Only)**
+
+If you prefer to run just the database in Docker:
+
 ```bash
 docker run -d ^
   --name task-postgres ^
