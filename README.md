@@ -44,7 +44,8 @@ A fullstack task management application built with .NET 10, Nuxt 4, and PostgreS
 
 1. **Clone the repository**
    ```bash
-   cd "c:\Users\verio\Documents\CV & Portofolio\Hire\dana"
+   git clone https://github.com/Aberossyverio/TaskManagement.git
+   cd TaskManagement
    ```
 
 2. **Start all services**
