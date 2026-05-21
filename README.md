@@ -245,6 +245,183 @@ docker-compose down -v
 docker-compose up --build --force-recreate
 ```
 
-## License
+## Architecture & Design Decisions
 
-This project is for technical assessment purposes.
+### Backend Architecture
+
+I went with a vertical slice architecture using FastEndpoints instead of the traditional controller-based approach. Here's why:
+
+**Why FastEndpoints?**
+Honestly, I wanted something cleaner than the usual MVC controllers. FastEndpoints lets you organize code by feature rather than by technical layer. Each endpoint is self-contained with its request/response models and validation logic right there. Makes it way easier to find stuff and modify features without touching unrelated code.
+
+**Feature-Based Organization**
+```
+Features/
+├── Auth/           # Everything auth-related in one place
+└── TaskModule/     # All task operations together
+```
+
+Each feature has its own domain models, endpoints, and configurations. If I need to change how tasks work, I know exactly where to look.
+
+**The Core Layer**
+I built a small core layer with reusable stuff:
+- `Result<T>` pattern for error handling (no exceptions for business logic)
+- Pagination helpers (because every list needs pagination eventually)
+- Custom JSON converters for consistent date formatting
+- Generic API response wrapper
+
+This keeps the endpoints clean and focused on business logic.
+
+### Frontend Architecture
+
+**Nuxt 4 with Composition API**
+Used Vue 3's Composition API throughout because it's just more flexible than Options API. The code is more reusable and easier to test.
+
+**Feature-Based Structure**
+```
+app/
+├── features/       # Business logic organized by feature
+│   ├── auth/
+│   └── tasks/
+├── composables/    # Shared utilities (API client, auth)
+├── components/     # Reusable UI components
+└── pages/          # Route pages
+```
+
+**Nuxt UI**
+Went with Nuxt UI instead of building components from scratch. It's built on Tailwind and Headless UI, looks good out of the box, and saved a ton of time. For a technical test, I'd rather show good architecture than spend hours styling buttons.
+
+### Authentication Flow
+
+Implemented JWT with refresh tokens:
+- Access token (1 hour) - short-lived for security
+- Refresh token (7 days) - longer-lived for convenience
+- Automatic token refresh on 401 responses
+
+Tokens are stored using Nuxt's `useCookie` composable, which stores them in browser cookies. The API client automatically attaches the Bearer token to every request.
+
+### Database Design
+
+Kept it simple with two main entities:
+- **Users** - Basic auth info, passwords hashed with BCrypt
+- **Tasks** - Owned by users, with status/priority enums
+
+Used GUIDs for IDs (better for distributed systems, no sequential ID guessing). Added `CreatedAt`/`UpdatedAt` timestamps on everything through a base `AuditableEntity` class.
+
+## Assumptions Made
+
+1. **Single User System (for now)**: The app seeds one admin user. In reality, you'd want user registration, but I focused on the core task management features.
+
+2. **Simple Auth**: No password reset, email verification, or 2FA. Just username/password login. These would be important for production but felt like overkill for a technical test.
+
+3. **Task Ownership**: Tasks belong to users, but there's no sharing or collaboration features. Each user sees only their tasks.
+
+4. **No Real-Time Updates**: If two users edit the same task, last write wins. No WebSockets or optimistic locking. Would need this for a real app.
+
+5. **Basic Validation**: Input validation is there but pretty minimal. Production would need more robust validation rules.
+
+6. **Development Environment**: The Docker setup is optimized for development, not production. Secrets are in plain text, no HTTPS, etc.
+
+## Technical Tradeoffs
+
+### What I Chose & Why
+
+**FastEndpoints over Controllers**
+- Pro: Cleaner code organization, less boilerplate
+- Con: Less familiar to some .NET devs, smaller community
+- Why: The code quality improvement was worth it
+
+**Entity Framework over Dapper**
+- Pro: Migrations, change tracking, easier relationships
+- Con: Slower for complex queries, more overhead
+- Why: For CRUD operations, EF is faster to develop with
+
+**Nuxt UI over Custom Components**
+- Pro: Saved days of development time, consistent design
+- Con: Larger bundle size, less customization
+- Why: Better to show architecture skills than CSS skills
+
+**Cookie-based Auth (Nuxt useCookie)**
+- Pro: Works with SSR, persists across page reloads
+- Con: Not httpOnly by default, vulnerable to XSS
+- Why: Simple to implement, works well with Nuxt
+
+**PostgreSQL over SQLite**
+- Pro: Production-ready, better for concurrent access
+- Con: Requires Docker/installation, heavier
+- Why: Shows I'm thinking about real-world deployment
+
+## What I'd Improve
+
+### High Priority
+
+1. **Unit & Integration Tests**
+   - Backend: xUnit tests for endpoints and business logic
+   - Frontend: Vitest for composables, Playwright for E2E
+   - Right now there's zero test coverage, which hurts
+
+2. **Better Error Handling**
+   - Structured logging (Serilog)
+   - Error tracking (Sentry or similar)
+   - More specific error messages
+   - Retry logic for transient failures
+
+3. **Validation**
+   - FluentValidation on backend (it's there but minimal)
+   - Better frontend validation with error messages
+   - Consistent validation rules between frontend/backend
+
+4. **Security Hardening**
+   - Rate limiting on auth endpoints
+   - HTTPS everywhere
+   - HttpOnly cookies for tokens (currently accessible via JS)
+   - Proper secrets management (Azure Key Vault, etc.)
+   - CORS configuration for production
+   - XSS and CSRF protection
+
+### Nice to Have
+
+5. **Performance**
+   - Redis caching for frequently accessed data
+   - Database indexes on common queries
+   - Lazy loading on frontend
+   - Image optimization
+   - API response compression
+
+6. **User Experience**
+   - Optimistic UI updates
+   - Skeleton loaders instead of spinners
+   - Keyboard shortcuts
+   - Drag-and-drop task reordering
+   - Dark mode (Nuxt UI supports it, just needs wiring)
+
+7. **Features**
+   - Task categories/tags
+   - File attachments
+   - Comments on tasks
+   - Activity history
+   - Email notifications
+   - Task sharing between users
+
+8. **DevOps**
+   - CI/CD pipeline (GitHub Actions)
+   - Automated database migrations
+   - Health check endpoints
+   - Monitoring and alerting
+   - Production Docker setup with multi-stage builds
+
+9. **Code Quality**
+   - API versioning
+   - OpenAPI spec generation for client SDKs
+   - Better TypeScript types (generate from backend)
+   - Code documentation
+   - Architecture decision records (ADRs)
+
+### If This Was a Real Product
+
+- **Multi-tenancy**: Support for teams/organizations
+- **Real-time collaboration**: WebSockets for live updates
+- **Mobile app**: React Native or Flutter
+- **Offline support**: PWA with service workers
+- **Analytics**: Track user behavior, task completion rates
+- **Integrations**: Slack, email, calendar sync
