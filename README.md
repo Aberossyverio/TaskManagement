@@ -328,17 +328,19 @@ Used GUIDs for IDs (better for distributed systems, no sequential ID guessing). 
 
 ## Assumptions Made
 
-1. **Single User System (for now)**: The app seeds one admin user. In reality, you'd want user registration, but I focused on the core task management features.
+1. **Docker for Easy Setup**: I chose to provide Docker Compose as the primary setup method because it's way easier for reviewers to just run `docker-compose up` and have everything working. No need to install PostgreSQL, configure ports, or deal with environment differences.
 
-2. **Simple Auth**: No password reset, email verification, or 2FA. Just username/password login. These would be important for production but felt like overkill for a technical test.
+2. **Single User System (for now)**: The app seeds one admin user. In reality, you'd want user registration, but I focused on the core task management features.
 
-3. **Task Ownership**: Tasks belong to users, but there's no sharing or collaboration features. Each user sees only their tasks.
+3. **Simple Auth**: No password reset, email verification, or 2FA. Just username/password login. These would be important for production but felt like overkill for now.
 
-4. **No Real-Time Updates**: If two users edit the same task, last write wins. No WebSockets or optimistic locking. Would need this for a real app.
+4. **Task Ownership**: Tasks belong to users, but there's no sharing or collaboration features. Each user sees only their tasks.
 
-5. **Basic Validation**: Input validation is there but pretty minimal. Production would need more robust validation rules.
+5. **No Real-Time Updates**: If two users edit the same task, last write wins. No WebSockets or optimistic locking. Would need this for a real app.
 
-6. **Development Environment**: The Docker setup is optimized for development, not production. Secrets are in plain text, no HTTPS, etc.
+6. **Basic Validation**: Input validation is there but pretty minimal. Production would need more robust validation rules.
+
+7. **Development Environment**: The Docker setup is optimized for development, not production. Secrets are in plain text, no HTTPS, etc.
 
 ## Technical Tradeoffs
 
@@ -373,23 +375,33 @@ Used GUIDs for IDs (better for distributed systems, no sequential ID guessing). 
 
 ### High Priority
 
-1. **Unit & Integration Tests**
+1. **Proper Authentication System**
+   - User registration with email verification
+   - Password reset/forgot password flow
+   - Email confirmation tokens
+   - Account activation/deactivation
+   - Password strength requirements
+   - Maybe add OAuth providers (Google, GitHub) for easier login
+   - Two-factor authentication (2FA) for extra security
+   - Right now it's just basic login because I wanted to focus on the task management features first
+
+2. **Unit & Integration Tests**
    - Backend: xUnit tests for endpoints and business logic
    - Frontend: Vitest for composables, Playwright for E2E
    - Right now there's zero test coverage, which hurts
 
-2. **Better Error Handling**
+3. **Better Error Handling**
    - Structured logging (Serilog)
    - Error tracking (Sentry or similar)
    - More specific error messages
    - Retry logic for transient failures
 
-3. **Validation**
+4. **Validation**
    - FluentValidation on backend (it's there but minimal)
    - Better frontend validation with error messages
    - Consistent validation rules between frontend/backend
 
-4. **Security Hardening**
+5. **Security Hardening**
    - Rate limiting on auth endpoints
    - HTTPS everywhere
    - HttpOnly cookies for tokens (currently accessible via JS)
@@ -399,21 +411,21 @@ Used GUIDs for IDs (better for distributed systems, no sequential ID guessing). 
 
 ### Nice to Have
 
-5. **Performance**
+6. **Performance**
    - Redis caching for frequently accessed data
    - Database indexes on common queries
    - Lazy loading on frontend
    - Image optimization
    - API response compression
 
-6. **User Experience**
+7. **User Experience**
    - Optimistic UI updates
    - Skeleton loaders instead of spinners
    - Keyboard shortcuts
    - Drag-and-drop task reordering
    - Dark mode (Nuxt UI supports it, just needs wiring)
 
-7. **Features**
+8. **Features**
    - Task categories/tags
    - File attachments
    - Comments on tasks
@@ -421,25 +433,16 @@ Used GUIDs for IDs (better for distributed systems, no sequential ID guessing). 
    - Email notifications
    - Task sharing between users
 
-8. **DevOps**
+9. **DevOps**
    - CI/CD pipeline (GitHub Actions)
    - Automated database migrations
    - Health check endpoints
    - Monitoring and alerting
    - Production Docker setup with multi-stage builds
 
-9. **Code Quality**
+10. **Code Quality**
    - API versioning
    - OpenAPI spec generation for client SDKs
    - Better TypeScript types (generate from backend)
    - Code documentation
    - Architecture decision records (ADRs)
-
-### If This Was a Real Product
-
-- **Multi-tenancy**: Support for teams/organizations
-- **Real-time collaboration**: WebSockets for live updates
-- **Mobile app**: React Native or Flutter
-- **Offline support**: PWA with service workers
-- **Analytics**: Track user behavior, task completion rates
-- **Integrations**: Slack, email, calendar sync
